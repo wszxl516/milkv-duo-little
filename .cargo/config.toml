@@ -1,0 +1,13 @@
+[build]
+target = "riscv64gc-unknown-none-elf"
+
+[target.riscv64gc-unknown-none-elf]
+rustflags = [
+    "-Clink-arg=-Tlinker.ld",
+    "-Clink-arg=--Map=os.map",
+    "-Ctarget-cpu=generic-rv64",
+]
+
+[unstable]
+mtime-on-use = true
+build-std = ["core", "alloc"]
