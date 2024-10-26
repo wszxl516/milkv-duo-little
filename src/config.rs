@@ -11,3 +11,5 @@ pub const PLIC_BASE: usize =  0x70000000;
 
 //2MB
 pub const MEM_SIZE: usize = 0x200000;
+
+pub const MEM_START: usize = 0x8fe00000;
