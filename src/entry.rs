@@ -1,11 +1,11 @@
-use core::arch::asm;
+use core::arch::naked_asm;
 
 #[allow(named_asm_labels)]
 #[naked]
 #[no_mangle]
 #[link_section = ".boot"]
 unsafe extern "C" fn _entry() -> ! {
-    asm!(
+    naked_asm!(
     r#"
     # enable fp
     li x3, 0x1 << 13
@@ -37,7 +37,6 @@ secondary:
 	"#,
         setup = sym crate::arch::setup,
         main = sym crate::kernel_main,
-        options(noreturn),
     )
 }
 

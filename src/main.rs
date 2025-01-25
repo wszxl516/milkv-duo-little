@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(naked_functions)]
 #![feature(const_trait_impl)]
+#![allow(static_mut_refs)]
 extern crate alloc;
 
 use core::panic::PanicInfo;
@@ -23,13 +24,10 @@ fn kernel_main() {
         match mail_box_fetch() {
             None => {}
             Some(cmd) => {
-                print!("set led ");
                 if cmd.param_ptr == 2 {
-                    println!("on");
                     duo_led_control(true);
                 }
                 else {
-                    println!("off");
                     duo_led_control(false);
                 }
             }

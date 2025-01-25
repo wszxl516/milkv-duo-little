@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use tock_registers::interfaces::Writeable;
-use crate::{pr_notice, reg_clear_bit_p, reg_read_p};
+use crate::{reg_clear_bit_p, reg_read_p};
 use tock_registers::registers::ReadWrite;
 use crate::config::{CLINT_BASE, SYS_CLOCK_HZ};
 
@@ -47,7 +47,6 @@ impl Timer {
         unsafe { &*(self.0 as *mut ClintReg) }
     }
     pub fn setup_timer(&self, ticks: u64) {
-        pr_notice!("T\n");
         let current = reg_read_p!(time) as u64;
         let next = current + ticks;
         self.reg().MTIMECMPL0.set(next as u32);

@@ -93,7 +93,9 @@ impl MailBox{
     }
     pub fn write (&self, channel: usize, data: CmdquT)
     {
-
+        let mut data = data;
+        data.valid.rtos_valid = 1;
+        data.cmd_id = data.cmd_id << 1 | 1;
         unsafe {
             self.mbox_content_reg().add(channel).write_volatile(data);  
         }

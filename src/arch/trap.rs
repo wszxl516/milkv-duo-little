@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::{get_bits, reg_read_p};
-use core::arch::{asm, global_asm};
+use core::arch::{global_asm, asm};
 use core::fmt::{Display, Formatter};
 use crate::arch::exception::{Exception, exception_handler};
 use crate::arch::interrupt::{Interrupt, interrupt_handler};
@@ -162,7 +162,6 @@ impl Trap {
 }
 
 #[allow(named_asm_labels)]
-#[naked]
 #[no_mangle]
 #[link_section = ".vectors"]
 pub unsafe extern "C" fn trap_handler() -> ! {
