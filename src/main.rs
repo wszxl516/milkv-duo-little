@@ -19,6 +19,7 @@ pub mod arch;
 
 #[no_mangle]
 fn kernel_main() {
+    pr_notice!("duo256 little core started!");
     plic::register_handler(61, mail_box_handler);
     loop {
         match mail_box_fetch() {
