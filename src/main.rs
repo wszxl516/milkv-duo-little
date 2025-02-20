@@ -19,7 +19,7 @@ pub mod arch;
 
 #[no_mangle]
 fn kernel_main() {
-    pr_notice!("duo256 little core started!");
+    println!("duo256 little core started!");
     plic::register_handler(61, mail_box_handler);
     loop {
         match mail_box_fetch() {
@@ -27,18 +27,26 @@ fn kernel_main() {
             Some(cmd) => {
                 if cmd.param_ptr == 2 {
                     duo_led_control(true);
+                    println!("led on!\n");
                 }
                 else {
                     duo_led_control(false);
+                    println!("led off!\n");
                 }
             }
         }
-        common::sleep::sleep(1);
+        common::sleep::sleep_ns(1000);
     }
 }
+
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     pr_err!("panic: {:?}", info);
-    loop {}
+    loop {
+        duo_led_control(true);
+        common::sleep::sleep_ns(100);
+        duo_led_control(false);
+        common::sleep::sleep_ns(100);
+    }
 }
 

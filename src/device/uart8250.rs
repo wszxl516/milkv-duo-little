@@ -1,44 +1,115 @@
-use tock_registers::interfaces::{Readable, Writeable};
-use tock_registers::registers::{ReadOnly, ReadWrite};
-use tock_registers::{register_structs};
+#![allow(dead_code)]
+use tock_registers::{
+    interfaces::{Readable, Writeable},
+    register_structs,
+    registers::{ReadOnly, ReadWrite},
+};
 
 register_structs! {
-    Uart8250Reg {
-        (0x0 => pub data_dll: ReadWrite<u8>),
-        (0x1 => pub ier_dlh: ReadWrite<u8>),
-        (0x2 => pub iir_fcr: ReadWrite<u8>),
-        (0x3 => pub lcr: ReadWrite<u8>),
-        (0x4 => pub mcr: ReadWrite<u8>),
-        (0x5 => pub lsr: ReadOnly<u8>),
-        (0x6 => pub msr: ReadOnly<u8>),
-        (0x7 => pub sr: ReadWrite<u8>),
-        (0x8 => @END),
+    DW8250Regs {
+        /// Get or Put Register.
+        (0x00 => rbr: ReadWrite<u32>),
+        (0x04 => ier: ReadWrite<u32>),
+        (0x08 => fcr: ReadWrite<u32>),
+        (0x0c => lcr: ReadWrite<u32>),
+        (0x10 => mcr: ReadWrite<u32>),
+        (0x14 => lsr: ReadOnly<u32>),
+        (0x18 => msr: ReadOnly<u32>),
+        (0x1c => scr: ReadWrite<u32>),
+        (0x20 => lpdll: ReadWrite<u32>),
+        (0x24 => _reserved0),
+        /// Uart Status Register.
+        (0x7c => usr: ReadOnly<u32>),
+        (0x80 => _reserved1),
+        (0xc0 => dlf: ReadWrite<u32>),
+        (0xc4 => @END),
     }
 }
-pub struct Uart8250(usize);
 
-impl Uart8250 {
-    pub const fn from_addr(addr: usize) -> Self {
-        Self { 0: addr }
+/// dw-apb-uart serial driver: DW8250
+pub struct DW8250 {
+    base_vaddr: usize,
+}
+
+impl DW8250 {
+    /// New a DW8250
+    pub const fn new(base_vaddr: usize) -> Self {
+        Self { base_vaddr }
     }
-    #[inline]
-    fn reg(&self) -> &Uart8250Reg {
-        unsafe { &*(self.0 as *mut Uart8250Reg) }
+
+    const fn regs(&self) -> &DW8250Regs {
+        unsafe { &*(self.base_vaddr as *const _) }
     }
-    pub fn init(&self, uart_clock: u64, baudrate: u64) {
-        let divisor = uart_clock / (16 * baudrate);
-        let reg = self.reg();
-        reg.lcr.set(0x80 | 0x03);
-        reg.data_dll.set((divisor & 0xff) as u8);
-        reg.ier_dlh.set(((divisor >> 8) & 0xff) as u8);
-        reg.lcr.set(reg.lcr.get() | &(!0x80));
-        reg.ier_dlh.set(0);
-        reg.mcr.set(0x1 | 0x2);
-        reg.iir_fcr.set(0x1 | 0x2 | 0x4);
-        reg.lcr.set(0x3);
+
+    /// DW8250 initialize
+    pub fn init(&mut self, baud_rate: u32) {
+        const UART_SRC_CLK: u32 = 25000000;
+        const BST_UART_DLF_LEN: u32 = 6;
+        // const BAUDRATE: u32 = 115200;
+        //const BAUDRATE: u32 = 38400;
+
+        let get_baud_divider = |baudrate| (UART_SRC_CLK << (BST_UART_DLF_LEN - 4)) / baudrate;
+        let divider = get_baud_divider(baud_rate);
+
+        // Waiting to be no USR_BUSY.
+        while self.regs().usr.get() & 0b1 != 0 {}
+
+        // bst_serial_hw_init_clk_rst
+
+        /* Disable interrupts and Enable FIFOs */
+        self.regs().ier.set(0);
+        self.regs().fcr.set(1);
+
+        /* Disable flow ctrl */
+        self.regs().mcr.set(0);
+
+        /* Clear MCR_RTS */
+        self.regs().mcr.set(self.regs().mcr.get() | (1 << 1));
+
+        /* Enable access DLL & DLH. Set LCR_DLAB */
+        self.regs().lcr.set(self.regs().lcr.get() | (1 << 7));
+
+        /* Set baud rate. Set DLL, DLH, DLF */
+        self.regs().rbr.set((divider >> BST_UART_DLF_LEN) & 0xff);
+        self.regs()
+            .ier
+            .set((divider >> (BST_UART_DLF_LEN + 8)) & 0xff);
+        self.regs().dlf.set(divider & ((1 << BST_UART_DLF_LEN) - 1));
+
+        /* Clear DLAB bit */
+        self.regs().lcr.set(self.regs().lcr.get() & !(1 << 7));
+
+        /* Set data length to 8 bit, 1 stop bit, no parity. Set LCR_WLS1 | LCR_WLS0 */
+        self.regs().lcr.set(self.regs().lcr.get() | 0b11);
     }
-    pub fn write_char(&self, c: u8) {
-        while (self.reg().lsr.get() & 0x20).ne(&0) {}
-        self.reg().data_dll.set(c);
+
+    /// DW8250 serial output
+    pub fn putchar(&self, c: u8) {
+        // Check LSR_TEMT
+        // Wait for last character to go.
+        while self.regs().lsr.get() & (1 << 6) == 0 {}
+        self.regs().rbr.set(c as u32);
+    }
+
+    /// DW8250 serial input
+    pub fn getchar(&self) -> Option<u8> {
+        // Check LSR_DR
+        // Wait for a character to arrive.
+        if self.regs().lsr.get() & 0b1 != 0 {
+            Some((self.regs().rbr.get() & 0xff) as u8)
+        } else {
+            None
+        }
+    }
+
+    /// DW8250 serial interrupt enable or disable
+    pub fn set_ier(&mut self, enable: bool) {
+        if enable {
+            // Enable interrupts
+            self.regs().ier.set(1);
+        } else {
+            // Disable interrupts
+            self.regs().ier.set(0);
+        }
     }
 }

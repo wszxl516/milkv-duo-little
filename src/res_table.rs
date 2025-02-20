@@ -1,40 +1,49 @@
-#[allow(dead_code)]
-#[repr(u32)]
-pub enum FwResourceType {
-    RscCarveout = 0,
-    RscDevmem = 1,
-    RscTrace = 2,
-    RscVdev = 3,
-    RscLast = 4,
-}
-
 #[repr(C)]
-pub struct ResourceTableHeader<const N: usize> {
+#[derive(Debug)]
+pub struct ResourceTable {
     pub ver: u32,
     pub num: u32,
-    pub reserved: [u32; 2],
-    pub offsets: [u32; N],
-}
-
-impl<const N: usize> ResourceTableHeader<N> {
-    const fn new(offsets: [u32; N]) -> Self {
-        ResourceTableHeader {
-            ver: 1,
-            num: N as u32,
-            reserved: [0, 0],
-            offsets,
-        }
-    }
+    pub reserved: [u32; 2usize],
+    pub offset: [u32; 0],
 }
 
 #[repr(C)]
-pub struct ResourceTable {
-    pub header: ResourceTableHeader<0>,
+#[derive(Debug)]
+pub struct FwRscHdr {
+    pub type_: u32,
+    pub data: [u8; 0],
 }
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct FwRscCarveout {
+    pub da: u32,
+    pub pa: u32,
+    pub len: u32,
+    pub flags: u32,
+    pub reserved: u32,
+    pub name: [u8; 32usize],
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct RemoteResourceTable {
+    pub resource_table: ResourceTable,
+    pub offset: [u32; 1usize],
+    pub carve_out: FwRscHdr,
+    pub carve_out_data: FwRscCarveout,
+}
+
+
+
 
 #[link_section = ".resource_table"]
 #[no_mangle]
 #[used]
-pub static RESOURCE_TABLE: ResourceTable = ResourceTable {
-    header: ResourceTableHeader::new([]),
+static RESOURCE_TABLE: RemoteResourceTable = RemoteResourceTable{
+    resource_table: ResourceTable{ver: 1, num: 1, reserved: [0; 2], offset: [0; 0]},
+    offset: [0x14;1 ],
+    carve_out: FwRscHdr{type_: 0, data: [0;0]},
+    carve_out_data: FwRscCarveout{da: 0x8fe00000, pa: 0x8fe00000, len: 0x200000,flags: 0x0, reserved: 0, name: 
+        [116, 101, 120, 116,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
 };

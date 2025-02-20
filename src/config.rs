@@ -1,5 +1,4 @@
-pub const UART_BASE: usize = 0x04140000;
-pub const UART_BASE1: usize = 0x04150000;
+pub const UART_BASE: usize = 0x04150000;
 pub const SYS_CLOCK_HZ: u64 = 25 * 1000 * 1000;
 pub const UART_BAUD_RATE: u64= 115200;
 

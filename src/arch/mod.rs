@@ -9,8 +9,14 @@ pub mod plic;
 mod mm;
 
 pub fn setup(){
-    // // set arch handler
+    // set arch handler
+    reg_write_p!(mscratch, 0);
+    reg_write_p!(mie, 0);
     reg_write_p!(mtvec, trap::trap_handler as usize);
+    // enable float
+    reg_update_p!(mstatus, 0x1 << 13);
+    // enable interrupt
+    reg_update_p!(mie, 0x880);
     reg_write_p!(mscratch, trap::M_TRAP_FRAMES.addr() as usize);
     //enable machine mode timer
     reg_write_p!(mstatus, 1 << 3);

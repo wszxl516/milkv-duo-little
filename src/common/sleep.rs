@@ -16,6 +16,6 @@ pub fn arch_usleep(us: u64) -> u64 {
     }
     return us;
 }
-pub fn sleep(seconds: u64) {
-    arch_usleep(seconds * 1000000);
+pub fn sleep_ns(seconds: u64) {
+    arch_usleep(seconds * 1000);
 }
