@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use super::trap::Regs;
-use crate::{println};
+use crate::{pr_err, println, reg_read_a};
 
 #[repr(u32)]
 pub enum Exception {
@@ -32,7 +32,29 @@ impl Exception {
         unsafe { core::mem::transmute(value) }
     }
 }
+fn dump_stack(regs: &Regs) {
+    pr_err!("\n");
+    pr_err!(
+        "call stack: \n\t#1: {:#x} \n\t#0: {:#x} \n",
+        regs.epc,
+        regs.ra
+    );
+    pr_err!("tval: {:#x}\n", regs.tval);
+    if regs.epc >= 4 {
+        pr_err!("code: ");
 
+        for addr in regs.epc..regs.epc + 4 {
+            let code = reg_read_a!(addr, u8);
+            pr_err!("{:02x} ", code);
+        }
+    }
+
+    pr_err!("\n");
+    pr_err!("\n");
+    pr_err!("{}", regs.context);
+    pr_err!("\n");
+    pr_err!("\n");
+}
 pub fn exception_handler(exception: Exception, regs: &Regs) {
     match exception {
         Exception::InstructionAddressMisaligned => println!("Instruction address misaligned."),
@@ -50,6 +72,6 @@ pub fn exception_handler(exception: Exception, regs: &Regs) {
         Exception::LoadPageFault => println!("Load page fault."),
         Exception::StoreAmoPageFault => println!("Store/AMO page fault."),
     }
-    println!("epc: {}", regs.epc);
+    dump_stack(regs);
     loop {}
 }

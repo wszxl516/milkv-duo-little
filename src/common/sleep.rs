@@ -1,6 +1,7 @@
-use crate::{reg_read_p};
+use crate::reg_read_p;
 use crate::config::SYS_CLOCK_HZ;
 
+#[inline]
 pub fn get_sys_time() -> u64 {
     let sys_tick = reg_read_p!(time) as u64;
     return sys_tick;
@@ -16,6 +17,6 @@ pub fn arch_usleep(us: u64) -> u64 {
     }
     return us;
 }
-pub fn sleep_ns(seconds: u64) {
+pub fn sleep_ms(seconds: u64) {
     arch_usleep(seconds * 1000);
 }

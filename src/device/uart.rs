@@ -1,17 +1,26 @@
 use core::fmt::Write;
-use lazy_static::lazy_static;
 use crate::device::pinmux::fix_uart1;
 
-lazy_static!{
-    static ref UART8250: super::uart8250::DW8250 = {
-        fix_uart1();
-        let mut u = super::uart8250::DW8250::new(super::super::config::UART_BASE);
-        u.init(115200);
-        u.set_ier(false);
-        u
+static mut UART: Option<super::uart_dev> = None;
+
+pub fn init_uart(){
+    fix_uart1();
+    let u = super::uart_dev::from_addr(super::super::config::UART_BASE);
+    u.init(115200);
+    unsafe {
+        UART.replace(u)
     };
 }
 
+#[inline]
+fn putc(c: char){
+    unsafe {
+        match &UART {
+            Some(u) => u.putchar(c as u8),
+            None => {}
+        }
+    }
+}
 pub struct Console;
 
 impl Write for Console {
@@ -23,7 +32,7 @@ impl Write for Console {
     }
 
     fn write_char(&mut self, c: char) -> core::fmt::Result {
-        UART8250.putchar(c as u8);
+        putc(c);
         Ok(())
     }
 }

@@ -16,8 +16,7 @@ unsafe extern "C" fn _entry() -> ! {
 
     // Continue primary hart
     csrr a0, mhartid
-    // li   a1, PRIM_HART
-    // bne  a0, a1, secondary
+    bne  a0, x0, secondary
 
     li x1, 0
     li x2, 0
@@ -50,37 +49,26 @@ unsafe extern "C" fn _entry() -> ! {
     li x29, 0
     li x30, 0
     li x31, 0
+    csrw mie, x0
+    csrw mstatus, x0
     // Primary hart
     la sp, stack_top
 
-2:
+bss_clear:
 
     // Clear bss section
     la a0, bss_start
     la a1, bss_end
-    bgeu a0, a1, 2f
-1:
-    // reduce branch time, be sure about bss alignment in linker script
-    sd zero, 0x00 (a0)
-    sd zero, 0x08 (a0)
-    sd zero, 0x10 (a0)
-    sd zero, 0x18 (a0)
-    sd zero, 0x20 (a0)
-    sd zero, 0x28 (a0)
-    sd zero, 0x30 (a0)
-    sd zero, 0x38 (a0)
-    addi a0, a0, 8 * 8
-    bltu a0, a1, 1b
-2:
-
+    bgeu a0, a1, bss_clear
     // argc, argv, envp is 0
     li  a0, 0
     li  a1, 0
     li  a2, 0
     call {setup}
     call {main}
+loop:
     wfi
-    j 1b
+    j loop
 
 secondary:
     // TODO: Multicore is not supported

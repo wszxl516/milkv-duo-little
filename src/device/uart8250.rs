@@ -33,7 +33,7 @@ pub struct DW8250 {
 
 impl DW8250 {
     /// New a DW8250
-    pub const fn new(base_vaddr: usize) -> Self {
+    pub const fn from_addr(base_vaddr: usize) -> Self {
         Self { base_vaddr }
     }
 
@@ -42,7 +42,7 @@ impl DW8250 {
     }
 
     /// DW8250 initialize
-    pub fn init(&mut self, baud_rate: u32) {
+    pub fn init(&self, baud_rate: u32) {
         const UART_SRC_CLK: u32 = 25000000;
         const BST_UART_DLF_LEN: u32 = 6;
         // const BAUDRATE: u32 = 115200;
@@ -50,9 +50,6 @@ impl DW8250 {
 
         let get_baud_divider = |baudrate| (UART_SRC_CLK << (BST_UART_DLF_LEN - 4)) / baudrate;
         let divider = get_baud_divider(baud_rate);
-
-        // Waiting to be no USR_BUSY.
-        while self.regs().usr.get() & 0b1 != 0 {}
 
         // bst_serial_hw_init_clk_rst
 

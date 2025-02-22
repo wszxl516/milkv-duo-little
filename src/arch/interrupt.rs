@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use crate::{println};
+use crate::println;
 use crate::config::SYS_CLOCK_HZ;
-use crate::arch::timer::{TIMER};
+use crate::arch::timer::TIMER;
 use crate::arch::trap::Context;
 use super::plic::platform_irq;
 #[repr(u32)]
