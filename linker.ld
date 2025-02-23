@@ -4,7 +4,7 @@ OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 
 MEMORY
 {
-   MEM_REGION : ORIGIN = 0x80000000 , LENGTH = 0x200000
+   MEM_REGION : ORIGIN = 0x8fe00000 , LENGTH = 0x200000
 }
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x10000;
 

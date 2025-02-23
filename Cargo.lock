@@ -61,17 +61,8 @@ dependencies = [
  "anyhow",
  "lazy_static",
  "linked_list_allocator",
- "riscv_plic",
- "tock-registers 0.9.0",
+ "tock-registers",
  "xuantie",
-]
-
-[[package]]
-name = "riscv_plic"
-version = "0.1.0"
-source = "git+https://github.com/arceos-org/riscv_plic.git#a6e3acdf4fa6ec5249e3adb115515b6903d00382"
-dependencies = [
- "tock-registers 0.8.1",
 ]
 
 [[package]]
@@ -94,12 +85,6 @@ checksum = "5b9eb1a2f4c41445a3a0ff9abc5221c5fcd28e1f13cd7c0397706f9ac938ddb0"
 dependencies = [
  "lock_api",
 ]
-
-[[package]]
-name = "tock-registers"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "696941a0aee7e276a165a978b37918fd5d22c55c3d6bda197813070ca9c0f21c"
 
 [[package]]
 name = "tock-registers"
