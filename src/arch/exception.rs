@@ -42,11 +42,8 @@ fn dump_stack(regs: &Regs) {
     pr_err!("tval: {:#x}\n", regs.tval);
     if regs.epc >= 4 {
         pr_err!("code: ");
-
-        for addr in regs.epc..regs.epc + 4 {
-            let code = reg_read_a!(addr, u8);
-            pr_err!("{:02x} ", code);
-        }
+        let code = reg_read_a!(regs.epc, u32);
+        pr_err!("{:02x} ", code);
     }
 
     pr_err!("\n");

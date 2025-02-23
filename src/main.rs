@@ -5,6 +5,7 @@
 #![allow(static_mut_refs)]
 extern crate alloc;
 use crate::device::led::duo_led_control;
+#[cfg(not(feature = "virt"))]
 use crate::device::mailbox::{mail_box_register, Mailboxmsg, Opration};
 use core::panic::PanicInfo;
 
@@ -18,14 +19,16 @@ mod res_table;
 #[no_mangle]
 fn kernel_main() {
     println!("duo256 little core started!");
-
+    #[cfg(not(feature = "virt"))]
     mail_box_register(0, led_task);
+    reg_read_a!(usize::MAX, u8);
     loop {
         common::sleep::sleep_ms(1000);
         println!("test!\n");
     }
 }
 
+#[cfg(not(feature = "virt"))]
 pub fn led_task(msg: &Mailboxmsg) {
     let cmd = unsafe { (msg.data as *const Opration).read_volatile() };
     if cmd.cmd_id == 0x93 {

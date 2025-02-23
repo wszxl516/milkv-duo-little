@@ -25,7 +25,7 @@ define QEMU_ARGS_RUN
 endef
 
 all:
-	cargo build
+	cargo build --features=virt
 
 bin: all
 	@rust-objcopy --binary-architecture=riscv64 --strip-all -O binary $(OUT_DIR)/$(TARGET) $(OUT_DIR)/$(TARGET).bin

@@ -54,12 +54,16 @@ unsafe extern "C" fn _entry() -> ! {
     // Primary hart
     la sp, stack_top
 
-bss_clear:
 
     // Clear bss section
-    la a0, bss_start
-    la a1, bss_end
-    bgeu a0, a1, bss_clear
+    la t0, bss_start
+    la t1, bss_end
+    mv t2, x1
+bss_clear:
+    add t0, t0, t2
+    sd  x0, 0(t0)
+    addi t2, t2, 8
+    bne a0, a1, bss_clear
     // argc, argv, envp is 0
     li  a0, 0
     li  a1, 0
